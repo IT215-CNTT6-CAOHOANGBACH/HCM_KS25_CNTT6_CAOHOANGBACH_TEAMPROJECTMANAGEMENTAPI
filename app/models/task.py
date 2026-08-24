@@ -10,7 +10,7 @@ class Task(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    status = Column(String(50), default="TODO", nullable=False)  # TODO, IN PROGRESS, DONE
-    priority = Column(String(50), default="MEDIUM", nullable=False)  # LOW, MEDIUM, HIGH
+    status = Column(String(50), default="TODO", nullable=False) 
+    priority = Column(String(50), default="MEDIUM", nullable=False)  
     due_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)

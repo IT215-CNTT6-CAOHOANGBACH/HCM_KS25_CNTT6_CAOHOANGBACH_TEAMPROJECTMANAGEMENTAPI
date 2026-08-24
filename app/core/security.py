@@ -1,10 +1,25 @@
-from fastapi import HTTPException, status
+from datetime import datetime, timedelta, timezone
 
-def raise_not_found(detail: str = "Không tìm thấy tài nguyên"):
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+import bcrypt
+from jose import jwt
 
-def raise_bad_request(detail: str = "Yêu cầu không hợp lệ"):
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+from app.core.config import settings
 
-def raise_forbidden(detail: str = "Bạn không có quyền thực hiện thao tác này"):
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+def hash_password(password: str) -> str:
+	return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(plain_password: str, password_hash: str) -> bool:
+	try:
+		return bcrypt.checkpw(plain_password.encode("utf-8"), password_hash.encode("utf-8"))
+	except (ValueError, TypeError):
+		return False
+
+
+def create_access_token(data: dict) -> str:
+	payload = data.copy()
+	payload["exp"] = datetime.now(timezone.utc) + timedelta(
+		minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+	)
+	return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
