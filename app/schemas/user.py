@@ -1,22 +1,33 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from datetime import datetime
 
 class UserBase(BaseModel):
     email: EmailStr
-    full_name: str = Field(min_length=1, max_length=255)
 
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=72)
+    full_name: str = Field(min_length=1, max_length=255)
+    password: str = Field(min_length=3, max_length=128)
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=1, max_length=72)
+    @field_validator("full_name")
+    @classmethod
+    def validate_full_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Họ tên không được để trống")
+        return value
+
+class UserLogin(UserBase):
+    password: str = Field(min_length=1, max_length=128)
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
 class UserResponse(UserBase):
     id: int
+    full_name: str
     role: str
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True  # Bật chế độ ORM để Pydantic đọc được dữ liệu từ SQLAlchemy Model
+    model_config = ConfigDict(from_attributes=True)
