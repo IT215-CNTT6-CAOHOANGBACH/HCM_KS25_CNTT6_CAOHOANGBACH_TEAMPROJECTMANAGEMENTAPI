@@ -18,6 +18,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
 	user = user_service.authenticate_user(db, user_data)
 	return {
+     	"message":"Đăng nhập thành công",
 		"access_token": create_access_token(
 			{"sub": str(user.id), "email": user.email, "role": user.role}
 		),
