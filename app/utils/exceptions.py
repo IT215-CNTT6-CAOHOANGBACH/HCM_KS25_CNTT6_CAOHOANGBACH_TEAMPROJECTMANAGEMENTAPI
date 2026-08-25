@@ -13,12 +13,8 @@ class ErrorMessage:
 
 
 def _authentication_error(detail: str) -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=detail,
-        headers={"WWW-Authenticate": "Bearer"},
+    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail=detail,headers={"WWW-Authenticate": "Bearer"},
     )
-
 
 def email_already_exists() -> HTTPException:
     return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ErrorMessage.EMAIL_ALREADY_EXISTS)
@@ -35,10 +31,8 @@ def inactive_account() -> HTTPException:
 def invalid_token() -> HTTPException:
     return _authentication_error(ErrorMessage.INVALID_TOKEN)
 
-
 def token_expired() -> HTTPException:
     return _authentication_error(ErrorMessage.TOKEN_EXPIRED)
-
 
 def authentication_required() -> HTTPException:
     return _authentication_error(ErrorMessage.AUTHENTICATION_REQUIRED)

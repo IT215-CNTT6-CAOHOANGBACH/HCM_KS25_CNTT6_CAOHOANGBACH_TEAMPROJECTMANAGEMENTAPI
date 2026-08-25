@@ -18,8 +18,7 @@ class ProjectResponse(ProjectBase):
         from_attributes = True
         
 class ProjectMemberCreate(BaseModel):
-    user_id:int
-    role: Optional[str] ="MEMBER"
+    user_id: int
     
     
 # Schema khi Sửa dự án (cho phép để trống)
