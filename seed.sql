@@ -15,9 +15,9 @@ DELETE FROM users;
 INSERT INTO users (id, email, password_hash, full_name, role, is_active)
 VALUES
     (1, 'admin@example.com', '$2b$12$PNYuWPg0R1sRthS35v7jW.VqmE75zQjqrQju84cQfreGettjAIBHO', 'System Admin', 'ADMIN', 1),
-    (2, 'user1@example.com', '$2b$12$nQkQohTynG7AoQ/u9N4fW.WntzgdMCxif9Ibnm6ukg5eFyivM8bge', 'Nguyen Van A', 'USER', 1),
-    (3, 'user2@example.com', '$2b$12$UAr.ALc3tiD2MwPAWdIy5.D8UPs4yRE/NiJEpbGqfddDl0C714ejS', 'Tran Thi B', 'USER', 1),
-    (4, 'user3@example.com', '$2b$12$2cB3ucH8fQbMnFOyMOYf8OIh4u4arpIxQVsVXMcM4htm5hu8wRcIq', 'Le Van C', 'USER', 1);
+    (2, 'user1@example.com', '$2b$12$PNYuWPg0R1sRthS35v7jW.VqmE75zQjqrQju84cQfreGettjAIBHO', 'Nguyen Van A', 'USER', 1),
+    (3, 'user2@example.com', '$2b$12$PNYuWPg0R1sRthS35v7jW.VqmE75zQjqrQju84cQfreGettjAIBHO', 'Tran Thi B', 'USER', 1),
+    (4, 'user3@example.com', '$2b$12$PNYuWPg0R1sRthS35v7jW.VqmE75zQjqrQju84cQfreGettjAIBHO', 'Le Van C', 'USER', 1);
 
 INSERT INTO projects (id, name, description, owner_id, is_deleted)
 VALUES

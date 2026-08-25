@@ -41,7 +41,7 @@ def check_is_owner(db: Session, project_id: int, user_id: int):
 #TẠO 1 DỰ ÁN VÀ PHÂN QUYỀN THÀNH OWNER
 @router.post("", response_model=ProjectResponse, status_code=201)
 def create_project(project_in: ProjectCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if not project_in.name or len(project_in.name) > 20:
+    if not project_in.name or len(project_in.name) > 10:
         raise HTTPException(status_code=400, detail="Tên dự án không được để trống và không vượt quá 20 ký tự")
 
     new_project = Project(name=project_in.name, description=project_in.description, owner_id=current_user.id)
