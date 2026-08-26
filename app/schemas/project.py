@@ -19,6 +19,10 @@ class ProjectResponse(ProjectBase):
         
 class ProjectMemberCreate(BaseModel):
     user_id: int
+
+
+class MemberAddResponse(BaseModel):
+    message: str
     
     
 # Schema khi Sửa dự án (cho phép để trống)

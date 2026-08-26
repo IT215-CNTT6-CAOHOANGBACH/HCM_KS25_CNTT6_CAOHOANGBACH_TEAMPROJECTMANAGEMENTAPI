@@ -11,7 +11,7 @@ from app.models.project import Project, ProjectMember
 from app.models.task import Task, Comment, Attachment, TaskStatus, TaskPriority
 from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse, CommentCreate, CommentResponse, AttachmentResponse
 
-router = APIRouter(prefix="/projects", tags=["Tasks & Comments"])
+router = APIRouter(prefix="/projects", tags=["Tasks"])
 
 # --- HELPER: Kiểm tra quyền trong Project ---
 def get_member_role(db: Session, project_id: int, user_id: int):
@@ -34,18 +34,34 @@ def check_assignee_in_project(db: Session, project_id: int, assignee_id: int):
 
 
 # 1. TẠO & XEM DANH SÁCH TASK  Filter, Search)
-@router.post("/{project_id}/tasks", response_model=TaskResponse, status_code=201 )
+@router.post(
+    "/{project_id}/tasks",
+    response_model=TaskResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Tạo task trong project",
+    description="Tạo task mới trong project mà người dùng hiện tại là thành viên.",
+    response_description="Task vừa được tạo",
+)
 def create_task(project_id: int, task_in: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     get_member_role(db, project_id, current_user.id) # Bất kỳ member nào cũng được tạo task
-    check_assignee_in_project(db, project_id, task_in.assignee_id)
+    task_data = task_in.model_dump()
+    if not task_data["assignee_id"]:
+        task_data["assignee_id"] = current_user.id
+    check_assignee_in_project(db, project_id, task_data["assignee_id"])
     #model_dump là chỉ là chuyển  pydantic object thành  dictionary
-    new_task = Task(**task_in.model_dump(), project_id=project_id)
+    new_task = Task(**task_data, project_id=project_id)
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
     return new_task
 
-@router.get("/{project_id}/tasks", response_model=List[TaskResponse])
+@router.get(
+    "/{project_id}/tasks",
+    response_model=List[TaskResponse],
+    summary="Lấy danh sách task",
+    description="Lấy các task thuộc project với tùy chọn lọc, tìm kiếm, phân trang và sắp xếp.",
+    response_description="Danh sách task trong project",
+)
 def get_tasks(
     project_id: int,
     status: Optional[TaskStatus] = Query(None, description="Lọc theo TODO, IN_PROGRESS, DONE"),
@@ -76,9 +92,16 @@ def get_tasks(
 
 # 2. CHI TIẾT, UPDATE, DELETE TASK
 # (Đổi prefix riêng cho các API thao tác trực tiếp lên task_id)
-task_router = APIRouter(prefix="/tasks", tags=["Tasks & Comments"])
+task_router = APIRouter(prefix="/tasks")
 
-@task_router.get("/{task_id}", response_model=TaskResponse)
+@task_router.get(
+    "/{task_id}",
+    response_model=TaskResponse,
+    tags=["Tasks"],
+    summary="Xem chi tiết task",
+    description="Xem task nếu người dùng hiện tại là thành viên của project chứa task.",
+    response_description="Thông tin chi tiết task",
+)
 def get_task(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task: raise HTTPException(status_code=404, detail="Không tìm thấy task")
@@ -86,7 +109,14 @@ def get_task(task_id: int, db: Session = Depends(get_db), current_user: User = D
     get_member_role(db, task.project_id, current_user.id) # Chặn user khác project
     return task
 
-@task_router.patch("/{task_id}", response_model=TaskResponse)
+@task_router.patch(
+    "/{task_id}",
+    response_model=TaskResponse,
+    tags=["Tasks"],
+    summary="Cập nhật task",
+    description="Cập nhật một phần task. Chỉ OWNER hoặc assignee của task được phép thực hiện.",
+    response_description="Task sau khi cập nhật",
+)
 def update_task(task_id: int, task_in: TaskUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task: raise HTTPException(status_code=404, detail="Không tìm thấy task")
@@ -109,7 +139,15 @@ def update_task(task_id: int, task_in: TaskUpdate, db: Session = Depends(get_db)
     db.refresh(task)
     return task
 
-@task_router.delete("/{task_id}", status_code=204)
+@task_router.delete(
+    "/{task_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    tags=["Tasks"],
+    summary="Xóa task",
+    description="Xóa task khỏi project. Chỉ OWNER của project được phép thực hiện.",
+    response_description="Không có nội dung trả về",
+)
 def delete_task(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task: raise HTTPException(status_code=404, detail="Không tìm thấy task")
@@ -125,7 +163,15 @@ def delete_task(task_id: int, db: Session = Depends(get_db), current_user: User 
 # ==========================================
 # 3. COMMENTS & FILE UPLOAD
 # ==========================================
-@task_router.post("/{task_id}/comments", response_model=CommentResponse)
+@task_router.post(
+    "/{task_id}/comments",
+    response_model=CommentResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Comments"],
+    summary="Thêm comment vào task",
+    description="Thêm comment mới vào task khi người dùng là thành viên của project.",
+    response_description="Comment vừa được tạo",
+)
 def add_comment(task_id: int, comment_in: CommentCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task: raise HTTPException(status_code=404, detail="Không tìm thấy task")
@@ -140,7 +186,15 @@ def add_comment(task_id: int, comment_in: CommentCreate, db: Session = Depends(g
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@task_router.post("/{task_id}/attachments", response_model=AttachmentResponse)
+@task_router.post(
+    "/{task_id}/attachments",
+    response_model=AttachmentResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Attachments"],
+    summary="Tải file lên task",
+    description="Tải file đính kèm lên task. Kích thước tối đa 5 MB.",
+    response_description="Thông tin file đã tải lên",
+)
 async def upload_file(task_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task: raise HTTPException(status_code=404, detail="Không tìm thấy task")
