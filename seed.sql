@@ -2,8 +2,7 @@ USE project_management;
 
 START TRANSACTION;
 
--- Demo passwords: admin = 123, user1 = 111, user2 = 222, user3 = 333.
--- These short passwords are for local testing only.
+-- Demo passwords: all users = 123
 
 -- Xoa du lieu cu theo thu tu khoa ngoai de co the chay lai file seed.
 DELETE FROM activity_logs;

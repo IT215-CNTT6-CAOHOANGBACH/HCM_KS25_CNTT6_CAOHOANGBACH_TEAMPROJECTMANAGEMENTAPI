@@ -12,7 +12,8 @@ app = FastAPI(title="Project Management API")
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(projects.router)
-# app.include_router(tasks.router)
+app.include_router(tasks.router) # Router thuộc project (/projects/{id}/tasks)
+app.include_router(tasks.task_router) # Router trực tiếp tác động task (/tasks/{id})   
 
 @app.get("/")
 def health_check():
