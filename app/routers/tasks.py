@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from typing import List, Optional
+from typing import List, Literal, Optional
 import os, uuid, shutil
 
 from app.db.database import get_db
@@ -38,7 +38,7 @@ def check_assignee_in_project(db: Session, project_id: int, assignee_id: int):
 def create_task(project_id: int, task_in: TaskCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     get_member_role(db, project_id, current_user.id) # Bất kỳ member nào cũng được tạo task
     check_assignee_in_project(db, project_id, task_in.assignee_id)
-
+    #model_dump là chỉ là chuyển  pydantic object thành  dictionary
     new_task = Task(**task_in.model_dump(), project_id=project_id)
     db.add(new_task)
     db.commit()
@@ -52,6 +52,10 @@ def get_tasks(
     priority: Optional[TaskPriority] = Query(None, description="Lọc theo LOW, MEDIUM, HIGH"),
     assignee_id: Optional[int] = None,
     search: Optional[str] = Query(None, description="Tìm kiếm theo tiêu đề"),
+    limit: int = Query(20, ge=1, le=100, description="Số task tối đa trả về"),
+    offset: int = Query(0, ge=0, description="Số task bỏ qua trước khi trả về"),
+    sort_by: Literal["created_at", "due_date"] = Query("created_at", description="Trường dùng để sắp xếp"),
+    sort_order: Literal["asc", "desc"] = Query("desc", description="Thứ tự sắp xếp"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -64,7 +68,10 @@ def get_tasks(
     if assignee_id: query = query.filter(Task.assignee_id == assignee_id)
     if search: query = query.filter(Task.title.ilike(f"%{search}%"))
 
-    return query.all()
+    sort_column = getattr(Task, sort_by)
+    query = query.order_by(sort_column.asc() if sort_order == "asc" else sort_column.desc())
+
+    return query.offset(offset).limit(limit).all()
 
 
 # 2. CHI TIẾT, UPDATE, DELETE TASK
